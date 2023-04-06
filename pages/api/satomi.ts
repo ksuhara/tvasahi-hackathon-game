@@ -1,4 +1,5 @@
 import initializeFirebaseServer from "@/lib/initFirebaseAdmin";
+import textToSpeech from "@google-cloud/text-to-speech";
 import * as line from "@line/bot-sdk";
 import { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
@@ -9,7 +10,7 @@ const config: line.ClientConfig = {
 };
 
 const client = new line.Client(config);
-const { db } = initializeFirebaseServer();
+const { db, storage } = initializeFirebaseServer();
 
 async function getConversations(userId: string) {
   const conversationRef = db.ref(`conversations/satomi/${userId}`);
@@ -79,7 +80,54 @@ async function handleText(
       userId
     );
 
-    await client.replyMessage(replyToken, { type: "text", text: responseText });
+    const textToSpeechClient = new textToSpeech.TextToSpeechClient({
+      projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+      credentials: {
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        private_key: (process.env.FIREBASE_PRIVATE_KEY as string).replace(
+          /\\n/g,
+          "\n"
+        ),
+      },
+    });
+    const request = {
+      input: { text: responseText },
+      voice: {
+        languageCode: "ja-jp",
+        name: "ja-JP-Standard-A",
+        ssmlGender: "FEMALE" as any,
+      },
+      audioConfig: {
+        audioEncoding: "MP3" as any,
+      },
+    };
+
+    const [response] = await textToSpeechClient.synthesizeSpeech(request);
+    if (!response.audioContent) return;
+    const bucket = storage.bucket(
+      process.env.FIREBASE_STORAGE_BUCKET ||
+        "tvasahi-hackathon-game.appspot.com"
+    );
+
+    const file = bucket.file("test2.mp3");
+
+    await file.save(response.audioContent as any, {
+      metadata: {
+        contentType: "audio/mp3",
+      },
+    });
+
+    const url = await file.getSignedUrl({
+      action: "read",
+      expires: "03-09-2491",
+    });
+
+    await client.replyMessage(replyToken, {
+      //@ts-ignore
+      type: "audio",
+      originalContentUrl: url,
+      duration: 10000,
+    });
   } catch (error) {
     console.error(error);
     await client.replyMessage(replyToken, {

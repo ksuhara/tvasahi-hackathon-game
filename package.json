@@ -12,6 +12,7 @@
     "@chakra-ui/react": "^2.5.5",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
+    "@google-cloud/text-to-speech": "^4.2.1",
     "@line/bot-sdk": "^7.5.2",
     "@line/liff": "2.21.4",
     "@thirdweb-dev/auth": "^3.0.12",
