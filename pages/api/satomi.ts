@@ -91,7 +91,7 @@ async function handleText(
       },
     });
     const request = {
-      input: { text: "私は16歳です" },
+      input: { text: responseText },
       voice: {
         languageCode: "ja-jp",
         name: "ja-JP-Standard-A",
@@ -109,7 +109,7 @@ async function handleText(
         "tvasahi-hackathon-game.appspot.com"
     );
 
-    const file = bucket.file("test3.mp3");
+    const file = bucket.file(`${userId}-${conversations.length}.mp3`);
 
     await file.save(response.audioContent as any, {
       metadata: {
@@ -125,8 +125,8 @@ async function handleText(
     await client.replyMessage(replyToken, {
       //@ts-ignore
       type: "audio",
-      originalContentUrl: url,
-      duration: 10000,
+      originalContentUrl: url[0],
+      duration: 60000,
     });
   } catch (error) {
     console.error(error);
