@@ -1,6 +1,7 @@
 import initializeFirebaseServer from "@/lib/initFirebaseAdmin";
 import textToSpeech from "@google-cloud/text-to-speech";
 import * as line from "@line/bot-sdk";
+import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
 
@@ -137,6 +138,67 @@ async function handleText(
   }
 }
 
+async function handleAudio(
+  message: line.AudioEventMessage,
+  replyToken: string,
+  userId: string
+) {
+  try {
+    console.log(4);
+    const conversations = await getConversations(userId);
+    const audioId = message.id;
+    const axiosConfig = {
+      headers: {
+        Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN_SATOMI}`,
+      },
+    };
+    const transcoding = await axios.get(
+      `https://api-data.line.me/v2/bot/message/${audioId}/content/transcoding`,
+      axiosConfig
+    );
+    console.log(transcoding, "transcoding");
+    const stream = await client.getMessageContent(audioId);
+    const chunks = [];
+
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+
+    const buffer = Buffer.concat(chunks);
+
+    const bucket = storage.bucket(
+      process.env.FIREBASE_STORAGE_BUCKET ||
+        "tvasahi-hackathon-game.appspot.com"
+    );
+
+    const file = bucket.file(`${userId}-${conversations.length}.mp3`);
+
+    await file.save(buffer, {
+      metadata: {
+        contentType: "audio/mp3",
+      },
+    });
+
+    const url = await file.getSignedUrl({
+      action: "read",
+      expires: "03-09-2491",
+    });
+
+    await client.replyMessage(replyToken, {
+      //@ts-ignore
+      type: "audio",
+      originalContentUrl: url[0],
+      duration: 60000,
+    });
+  } catch (error) {
+    console.error(error);
+    await client.replyMessage(replyToken, {
+      type: "text",
+      text: "エラーが発生しました。しばらくしてからお試しください。",
+    });
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -152,14 +214,21 @@ export default async function handler(
     res.status(403).send("Invalid signature");
     return;
   }
+  console.log(1);
 
   const events = req.body.events;
 
   for (const event of events) {
     const userId = event.source.userId;
+    console.log(2);
 
-    if (event.type === "message" && event.message.type === "text") {
-      await handleText(event.message, event.replyToken, userId);
+    // if (event.type === "message" && event.message.type === "text") {
+    //   await handleText(event.message, event.replyToken, userId);
+    // }
+
+    if (event.type === "message" && event.message.type === "audio") {
+      console.log(3);
+      await handleAudio(event.message, event.replyToken, userId);
     }
   }
 
