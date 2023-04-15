@@ -32,10 +32,7 @@ export default function NFT(props: {
   const connect = useMetamask();
   const handleConnect = async () => {
     if (!window.ethereum) {
-      window.open(
-        "https://metamask.app.link/dapp/tvasahi-hackathon-game.vercel.app/",
-        "_blank"
-      );
+      window.open("dapp://tvasahi-hackathon-game.vercel.app/");
     }
     connect();
   };
