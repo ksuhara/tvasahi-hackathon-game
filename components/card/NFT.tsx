@@ -30,6 +30,15 @@ export default function NFT(props: {
   const textColorBid = useColorModeValue("brand.500", "white");
   const address = useAddress();
   const connect = useMetamask();
+  const handleConnect = async () => {
+    if (!window.ethereum) {
+      window.open(
+        "https://metamask.app.link/dapp/tvasahi-hackathon-game.vercel.app/",
+        "_blank"
+      );
+    }
+    connect();
+  };
 
   return (
     <Card p="20px">
@@ -147,7 +156,7 @@ export default function NFT(props: {
                 Mint NFT
               </Button>
             ) : (
-              <Button onClick={() => connect()}>Connect</Button>
+              <Button onClick={() => handleConnect()}>Connect</Button>
             )}
           </Flex>
         </Flex>
