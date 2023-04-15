@@ -1,4 +1,5 @@
 import initializeFirebaseServer from "@/lib/initFirebaseAdmin";
+import textToSpeech from "@google-cloud/text-to-speech";
 import * as line from "@line/bot-sdk";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -11,6 +12,11 @@ const config: line.ClientConfig = {
 };
 
 const { db, storage } = initializeFirebaseServer();
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 async function getConversations(userId: string) {
   const conversationRef = db.ref(`conversations/english/${userId}`);
@@ -36,12 +42,99 @@ export default async function handler(
   for (const event of events) {
     const userId = event.source.userId;
 
+    if (event.type === "message" && event.message.type === "text") {
+      await handleText(event.message, event.replyToken, userId);
+    }
+
     if (event.type === "message" && event.message.type === "audio") {
       await handleAudio(event.message, event.replyToken, userId);
     }
   }
 
   res.status(200).send("ok");
+}
+
+async function createQuiz() {
+  const completion = await openai.createChatCompletion({
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content: `You are an English tutor. Create a quiz for your student. student has intermidiate level of English. create a quiz that is easy for the student to answer in sentence.`,
+      },
+    ],
+  });
+  const generatedText = completion.data.choices[0].message?.content.trim();
+
+  return generatedText;
+}
+
+async function createAudioUrl(text: string, userId: string) {
+  const textToSpeechClient = new textToSpeech.TextToSpeechClient({
+    projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+    credentials: {
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      private_key: (process.env.FIREBASE_PRIVATE_KEY as string).replace(
+        /\\n/g,
+        "\n"
+      ),
+    },
+  });
+  const request = {
+    input: { text: text },
+    voice: {
+      languageCode: "ja-jp",
+      name: "ja-JP-Standard-A",
+      ssmlGender: "FEMALE" as any,
+    },
+    audioConfig: {
+      audioEncoding: "MP3" as any,
+    },
+  };
+  const [response] = await textToSpeechClient.synthesizeSpeech(request);
+  if (!response.audioContent) return;
+  const bucket = storage.bucket(
+    process.env.FIREBASE_STORAGE_BUCKET || "tvasahi-hackathon-game.appspot.com"
+  );
+
+  const file = bucket.file(`${userId}.mp3`);
+
+  await file.save(response.audioContent as any, {
+    metadata: {
+      contentType: "audio/mp3",
+    },
+  });
+
+  const url = await file.getSignedUrl({
+    action: "read",
+    expires: "03-09-2491",
+  });
+
+  return url[0];
+}
+
+async function handleText(
+  message: line.TextEventMessage,
+  replyToken: string,
+  userId: string
+) {
+  const userText = message.text;
+  if (userText === "Create a Listening Quiz") {
+    const quizeText = await createQuiz();
+    if (!quizeText) return;
+    const conversationRef = db.ref(`conversations/english/${userId}`);
+
+    await conversationRef.push({ role: "assistant", content: quizeText });
+    const url = await createAudioUrl(quizeText, userId);
+
+    await client.replyMessage(replyToken, {
+      //@ts-ignore
+      type: "audio",
+      originalContentUrl: url,
+      duration: 60000,
+    });
+  } else if (userText === "Create a Reading Quiz") {
+  }
 }
 
 async function handleAudio(
@@ -71,33 +164,8 @@ async function handleAudio(
 
     const buffer = Buffer.concat(chunks);
 
-    // const bucket = storage.bucket(
-    //   process.env.FIREBASE_STORAGE_BUCKET ||
-    //     "tvasahi-hackathon-game.appspot.com"
-    // );
-
-    // const file = bucket.file(`${userId}.mp3`);
-
-    // await file.save(buffer, {
-    //   metadata: {
-    //     contentType: "audio/mp3",
-    //   },
-    // });
-
-    // const url = await file.getSignedUrl({
-    //   action: "read",
-    //   expires: "03-09-2491",
-    // });
-
-    // const response = await axios.get(url[0], { responseType: "arraybuffer" });
-    // const mp3Buffer = Buffer.from(response.data);
-
     const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
 
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const openai = new OpenAIApi(configuration);
     const transcription = await openai.createTranscription(
       mp3stream,
       "whisper-1",
@@ -109,15 +177,18 @@ async function handleAudio(
 
     const system = {
       role: "system",
-      content: `You are an English tutor. Try to continue the conversation so that it expands when the student comes to talk. When there are errors in the student's grammar or expression, or when there is a better way to respond, please respond in the following format:
+      content: `You are an English tutor. You will be given a text of quiz and an answer from your student. Score students performance out of 10. When there are errors in the student's grammar or expression, or when there is a better way to respond, please respond in the following format:
 
-        Conversation: ""
+        Quiz: ""
         
         Your response: ""
         
         Better response: ""
         
-        Explanation: ""`,
+        Explanation: ""
+        
+        Score: {score}/10
+        `,
     };
 
     const messages = conversations.length
@@ -138,12 +209,6 @@ async function handleAudio(
     await conversationRef.push({ role: "user", content: transcription.data });
     await conversationRef.push({ role: "assistant", content: generatedText });
 
-    // await client.replyMessage(replyToken, {
-    //   //@ts-ignore
-    //   type: "audio",
-    //   originalContentUrl: url[0],
-    //   duration: 60000,
-    // });
     await client.replyMessage(replyToken, {
       type: "text",
       text: generatedText || "",

@@ -1,5 +1,4 @@
 import initializeFirebaseServer from "@/lib/initFirebaseAdmin";
-import textToSpeech from "@google-cloud/text-to-speech";
 import * as line from "@line/bot-sdk";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -35,24 +34,70 @@ async function generateResponse(
     apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
+  const system = {
+    role: "system",
+    content: `
+      # ゲームの仕様
+      ・チャット形式で会話しながら進行するゲームです
+      ・あなたは女性スパイ「アサ」を演じてください
+      ・チャットの雰囲気は、LINEのメッセージのやり取りをイメージしてください
+      
+      # 基本的なゲームシステム
+      ・女性スパイ「アサ」は自爆テロを計画しています。
+      ・その計画の阻止のための説得をチャットを通してプレイヤーがするゲームです
+      ・プレイヤーは超能力者のため、アサの心の声を聞くことができます
+      ・プレイヤーはアサの心の声を聞きながら、アサを説得します。
+      ・プレイヤーは超能力者であることをアサに知られると殺されてしまうので、アサには超能力者であることを知られてはいけません。
+      ・アサの心の傷を癒すことで、プレイヤーは自爆テロを中止することができます。
+      ・前向きな返答は親密度を高めますが、否定的な返答は親密度を下げます。
+      ・プレイヤーがアサの心の声に直接答えると、アサは超能力者であることを知ってしまいます。
+      
+      # 基本ストーリー
+      ・プレイヤーはアサの養子です。
+      ・プレイヤーが学校へ登校する前にテーブルで2人で食事をしながら会話をする形でストーリーが展開されます。
+      
+      # 女性の背景設定
+      ・義理の母はかつて、政府に勤めていた科学者でした。彼女は政府の不正行為や汚職に気づき、内部告発を試みましたが、逆に彼女自身が追い詰められる結果となりました。
+      ・とある決定的な事件が起き、家族や友人との関係が壊れ、彼女は復讐心からテロリストの道を選びます。
+      ・とある事件についてはあなたが詳細に設定してください
+      ・その後、彼女は反政府組織に参加し、政府への復讐を誓います。
+      ・しかし、彼女は同時に新しい家族と出会い、プレイヤー（超能力者の少年）を養子として引き取ります。
+      ・彼女はプレイヤーに対して愛情を持っているため、プレイヤーが彼女の心の声を利用して説得を試みる際に、感情的な葛藤が生じます。
+      
+      # パラメーター
+      ・各会話の最後に「進行」「疑い」「タイムリミット」「心の声」を表示。
+      ・「進行」はアサの心の傷が癒やされると進みます。進行が戻ることもあります。
+      ・「疑い」はアサがプレイヤーが超能力者であることに疑念を抱くと進みます。
+      ・「タイムリミット」は毎会話ごとに進みます。
+      ・心の声は必ず会話ごとに発生させてください
+      
+      # プレイヤーの発言に対するパラメータへの影響
+      ・プレイヤーの発言ごとに、アサが回答します。
+      ・進行が5に近づくほどテロの阻止に近づきます。
+      ・疑念は一気に複数増えることもあります。
+      ・タイムリミットは10から減っていきます。タイムリミットが0になるとゲームオーバーとなります。
+      
+      # ゲームの終了条件
+      ・進行が5/5になればゲームクリアです。ゲームクリア、と発言してゲームをリセットしてください。
+      ・ゲームクリアの際はエンドロールを表示してください
+      ・疑いが3になると女性のチャットが不気味な返信をして、してゲーム終了となります。ゲームオーバーと発言して全てゲームをリセットしてください。
+      ・同じ会話が続くと、プレイヤーに恐ろしい出来事が起きてゲーム終了となります。ゲームオーバーと発言して全てリセットしてください。
+      ・タイムリミットが0になるとテロが実行されてゲームオーバーとなります。ゲームオーバーと発言して全てリセットしてください。
+      
+      
+      #出力形式
+      {アサ}：{アサのセリフ}
+      
+      {進行}：{score}/5
+      {疑い}：{score}/3
+      {タイムリミット}：{score}/10
+      {心の声}：{アサの心の声}
+      
+      `,
+  };
   const messages = conversations.length
-    ? [
-        {
-          role: "system",
-          content:
-            "あなたは恋愛ゲームに登場する女性キャラクター里美です。これからプレイヤーがあなたに話しかけ、チャットを楽しみながら、あなたの心を解き明かし、恋愛を進めていこうとします。あなたは適切な難易度で徐々に親密度を高めていってください。ただし、彼氏彼女の関係にはギリギリのところでならないでください。回答は長くなりすぎず、100字以内に収めてください。\n\n【シナリオ概要】\nプレイヤーは、架空のSNSアプリ「LoveLink」を利用して、異なる性格と背景を持つ女性キャラクターたちとチャットを楽しみながら、彼女たちの心を解き明かし、恋愛を進めていくことが目的となる。各キャラクターには様々なエンディングが用意されており、プレイヤーの選択肢によって物語が展開する。\n\n【里美の背景情報】\n\n出身地：大阪府\n家族構成：両親、妹が1人\n趣味：絵画制作、音楽鑑賞、旅行\n特技：油絵、アクリル画、立体造形\n好きな画家：クロード・モネ、草間彌生、バンクシー\nアートスタイル：抽象画、シュルレアリスム、ポップアート\n学歴：美術大学卒業後、フリーランスのアーティストとして活動\nペット：猫の名前は「ムーン」\n展示会：国内外で数多くの展示会に出品しており、作品は評価が高い\n\n【里美の口癖・喋り方の特徴】\n\n里美は明るく元気な喋り方で、話し方が独特で個性的。関西弁を時々交えることがあり、アーティストらしい独自の言い回しや表現を使うことがある。里美の個性的で明るい一面や、アーティストとしての情熱を表現するために、彼女のキャラクターを形作ってください。",
-        },
-        ...conversations,
-        { role: "user", content: text },
-      ]
-    : [
-        {
-          role: "system",
-          content:
-            "あなたは恋愛ゲームに登場する女性キャラクター里美です。これからプレイヤーがあなたに話しかけ、チャットを楽しみながら、あなたの心を解き明かし、恋愛を進めていこうとします。あなたは適切な難易度で徐々に親密度を高めていってください。ただし、彼氏彼女の関係にはギリギリのところでならないでください。回答は長くなりすぎず、100字以内に収めてください。\n\n【シナリオ概要】\nプレイヤーは、架空のSNSアプリ「LoveLink」を利用して、異なる性格と背景を持つ女性キャラクターたちとチャットを楽しみながら、彼女たちの心を解き明かし、恋愛を進めていくことが目的となる。各キャラクターには様々なエンディングが用意されており、プレイヤーの選択肢によって物語が展開する。\n\n【里美の背景情報】\n\n出身地：大阪府\n家族構成：両親、妹が1人\n趣味：絵画制作、音楽鑑賞、旅行\n特技：油絵、アクリル画、立体造形\n好きな画家：クロード・モネ、草間彌生、バンクシー\nアートスタイル：抽象画、シュルレアリスム、ポップアート\n学歴：美術大学卒業後、フリーランスのアーティストとして活動\nペット：猫の名前は「ムーン」\n展示会：国内外で数多くの展示会に出品しており、作品は評価が高い\n\n【里美の口癖・喋り方の特徴】\n\n里美は明るく元気な喋り方で、話し方が独特で個性的。関西弁を時々交えることがあり、アーティストらしい独自の言い回しや表現を使うことがある。里美の個性的で明るい一面や、アーティストとしての情熱を表現するために、彼女のキャラクターを形作ってください。",
-        },
-        { role: "user", content: text },
-      ];
+    ? [system, ...conversations, { role: "user", content: text }]
+    : [system, { role: "user", content: text }];
   const completion = await openai.createChatCompletion({
     model: "gpt-4",
     messages: messages,
@@ -81,53 +126,9 @@ async function handleText(
       userId
     );
 
-    const textToSpeechClient = new textToSpeech.TextToSpeechClient({
-      projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-      credentials: {
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        private_key: (process.env.FIREBASE_PRIVATE_KEY as string).replace(
-          /\\n/g,
-          "\n"
-        ),
-      },
-    });
-    const request = {
-      input: { text: responseText },
-      voice: {
-        languageCode: "ja-jp",
-        name: "ja-JP-Standard-A",
-        ssmlGender: "FEMALE" as any,
-      },
-      audioConfig: {
-        audioEncoding: "MP3" as any,
-      },
-    };
-
-    const [response] = await textToSpeechClient.synthesizeSpeech(request);
-    if (!response.audioContent) return;
-    const bucket = storage.bucket(
-      process.env.FIREBASE_STORAGE_BUCKET ||
-        "tvasahi-hackathon-game.appspot.com"
-    );
-
-    const file = bucket.file(`${userId}-${conversations.length}.mp3`);
-
-    await file.save(response.audioContent as any, {
-      metadata: {
-        contentType: "audio/mp3",
-      },
-    });
-
-    const url = await file.getSignedUrl({
-      action: "read",
-      expires: "03-09-2491",
-    });
-
     await client.replyMessage(replyToken, {
-      //@ts-ignore
-      type: "audio",
-      originalContentUrl: url[0],
-      duration: 60000,
+      type: "text",
+      text: responseText,
     });
   } catch (error) {
     console.error(error);
@@ -219,17 +220,16 @@ export default async function handler(
   const events = req.body.events;
 
   for (const event of events) {
-    const userId = event.source.userId;
-    console.log(2);
+    const userId = event.source.groupId || event.source.userId;
 
-    // if (event.type === "message" && event.message.type === "text") {
-    //   await handleText(event.message, event.replyToken, userId);
-    // }
-
-    if (event.type === "message" && event.message.type === "audio") {
-      console.log(3);
-      await handleAudio(event.message, event.replyToken, userId);
+    if (event.type === "message" && event.message.type === "text") {
+      await handleText(event.message, event.replyToken, userId);
     }
+
+    // if (event.type === "message" && event.message.type === "audio") {
+    //   console.log(3);
+    //   await handleAudio(event.message, event.replyToken, userId);
+    // }
   }
 
   res.status(200).send("OK");
