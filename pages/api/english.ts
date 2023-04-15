@@ -20,7 +20,9 @@ const openai = new OpenAIApi(configuration);
 
 async function getConversations(userId: string) {
   const conversationRef = db.ref(`conversations/english/${userId}`);
-  const conversationSnapshot = await conversationRef.once("value");
+  const conversationSnapshot = await conversationRef
+    .limitToLast(3)
+    .once("value");
   const conversation: any = [];
 
   conversationSnapshot.forEach(function (childSnapshot) {
