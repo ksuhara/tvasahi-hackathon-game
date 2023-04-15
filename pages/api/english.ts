@@ -53,7 +53,7 @@ export default async function handler(
     if (event.type === "message" && event.message.type === "audio") {
       score = await handleAudio(event.message, event.replyToken, userId);
     }
-    if (score && score > 8) {
+    if (score && score > 5) {
       await client.replyMessage(event.replyToken, {
         type: "text",
         text: "おめでとう！",
