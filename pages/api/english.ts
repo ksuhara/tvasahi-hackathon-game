@@ -83,8 +83,8 @@ async function createAudioUrl(text: string, userId: string) {
   const request = {
     input: { text: text },
     voice: {
-      languageCode: "ja-jp",
-      name: "ja-JP-Standard-A",
+      languageCode: "en-US",
+      name: "en-US-Neural2-E",
       ssmlGender: "FEMALE" as any,
     },
     audioConfig: {
