@@ -48,8 +48,16 @@ export default async function handler(
       await handleText(event.message, event.replyToken, userId);
     }
 
+    let score;
+
     if (event.type === "message" && event.message.type === "audio") {
-      await handleAudio(event.message, event.replyToken, userId);
+      score = await handleAudio(event.message, event.replyToken, userId);
+    }
+    if (score && score > 8) {
+      await client.replyMessage(event.replyToken, {
+        type: "text",
+        text: "おめでとう！",
+      });
     }
   }
 
@@ -215,6 +223,14 @@ async function handleAudio(
       type: "text",
       text: generatedText || "",
     });
+
+    if (
+      generatedText?.includes("Score:") &&
+      generatedText?.match(/Score: (\d+)\/\d+/)![1]
+    ) {
+      const score = parseInt(generatedText?.match(/Score: (\d+)\/\d+/)![1]);
+      return score;
+    }
   } catch (error: any) {
     console.log("Error:", error.response.data.error);
     await client.replyMessage(replyToken, {
