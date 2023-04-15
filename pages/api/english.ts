@@ -60,7 +60,7 @@ async function createQuiz() {
     messages: [
       {
         role: "system",
-        content: `You are an English tutor. Create a quiz for your student. student has intermidiate level of English. create a quiz that is easy for the student to answer in sentence.`,
+        content: `You are an English tutor. Please ask your student one random quiz question to test their English conversation skills. Make sure the question is in a conversational format so that the student can answer in a conversational manner.`,
       },
     ],
   });
