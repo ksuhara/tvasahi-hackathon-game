@@ -33,6 +33,13 @@ async function getConversations(userId: string) {
   return conversation;
 }
 
+async function getQuestId(userId: string) {
+  const questRef = db.ref(`users/${userId}/currentQuest`);
+  const questSnapshot = await questRef.once("value");
+  const questId = questSnapshot.val();
+  return questId || 0;
+}
+
 const client = new line.Client(config);
 
 export default async function handler(
@@ -53,8 +60,17 @@ export default async function handler(
     if (event.type === "message" && event.message.type === "audio") {
       score = await handleAudio(event.message, event.replyToken, userId);
     }
-    if (score && score > 5) {
-      await client.replyMessage(event.replyToken, {
+
+    const questId = await getQuestId(userId);
+    if (score && score >= 7) {
+      const questRef = db.ref(`users/${userId}/quest/${questId}`);
+      await questRef.update({
+        updatedAt: Date.now(),
+        isCompleted: true,
+        score: score,
+      });
+
+      await client.pushMessage(userId, {
         type: "text",
         text: "おめでとう！",
       });
@@ -226,7 +242,7 @@ async function handleAudio(
 
     if (
       generatedText?.includes("Score:") &&
-      generatedText?.match(/Score: (\d+)\/\d+/)![1]
+      generatedText?.match(/Score: (\d+)\/\d+/)
     ) {
       const score = parseInt(generatedText?.match(/Score: (\d+)\/\d+/)![1]);
       return score;

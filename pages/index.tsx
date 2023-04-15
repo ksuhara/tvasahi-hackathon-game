@@ -1,7 +1,9 @@
-import { Button } from "@chakra-ui/react";
+import { contractAddress } from "@/lib/constant";
+import { Button, useToast } from "@chakra-ui/react";
 import type { Liff } from "@line/liff";
 import {
   useAddress,
+  useContract,
   useLogin,
   useLogout,
   useMetamask,
@@ -21,6 +23,9 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
   const { user, isLoggedIn } = useUser();
   const [secret, setSecret] = useState();
   const [idToken, setIdToken] = useState("");
+  const toast = useToast();
+
+  const { contract } = useContract(contractAddress);
 
   useEffect(() => {
     if (!liff) return;
@@ -45,6 +50,36 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     setSecret(data.message);
   };
 
+  const mint = async (tokenId: string) => {
+    const response = await fetch(`/api/generate-mint-signature`, {
+      method: "POST",
+      body: JSON.stringify({
+        toAddress: address,
+        tokenId,
+        idToken: idToken,
+      }),
+    });
+    const signedPayload = await response.json();
+    if (response.ok) {
+      try {
+        console.log(6);
+        console.log(contract, "contract");
+        const nft = await contract?.erc1155.signature.mint(signedPayload);
+      } catch (error: any) {
+        alert(error?.message);
+      } finally {
+      }
+    } else {
+      console.log(3);
+      toast({
+        title: "An error occurred.",
+        description: signedPayload.error,
+        status: "error",
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <div>
       {liff ? (
@@ -57,6 +92,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
             <Button onClick={() => connect()}>Connect</Button>
           )}
           <Button onClick={setWallet}>Set Wallet</Button>
+          <Button onClick={() => mint("0")}>Mint</Button>
 
           <pre>Connected Wallet: {address}</pre>
           <pre>User: {JSON.stringify(user, undefined, 2) || "N/A"}</pre>
