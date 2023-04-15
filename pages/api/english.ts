@@ -72,7 +72,7 @@ export default async function handler(
 
       await client.pushMessage(userId, {
         type: "text",
-        text: "おめでとう！",
+        text: "Congrats！ check your score in the game here! https://tvasahi-hackathon-game.vercel.app/",
       });
     }
   }

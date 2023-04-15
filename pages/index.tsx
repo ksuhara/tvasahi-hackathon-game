@@ -1,14 +1,14 @@
+import NFT from "@/components/card/NFT";
 import { contractAddress } from "@/lib/constant";
-import { Button, useToast } from "@chakra-ui/react";
-import type { Liff } from "@line/liff";
 import {
-  useAddress,
-  useContract,
-  useLogin,
-  useLogout,
-  useMetamask,
-  useUser,
-} from "@thirdweb-dev/react";
+  Flex,
+  SimpleGrid,
+  Text,
+  useColorModeValue,
+  useToast,
+} from "@chakra-ui/react";
+import type { Liff } from "@line/liff";
+import { useAddress, useContract } from "@thirdweb-dev/react";
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 
@@ -17,13 +17,10 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
   liffError,
 }) => {
   const address = useAddress();
-  const connect = useMetamask();
-  const { login } = useLogin();
-  const { logout } = useLogout();
-  const { user, isLoggedIn } = useUser();
-  const [secret, setSecret] = useState();
   const [idToken, setIdToken] = useState("");
   const toast = useToast();
+  const [quest, setQuest] = useState<any>();
+  const textColor = useColorModeValue("secondaryGray.900", "white");
 
   const { contract } = useContract(contractAddress);
 
@@ -39,16 +36,21 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     fn();
   }, [liff]);
 
-  const setWallet = async () => {
-    const res = await fetch("/api/registerWallet", {
-      method: "POST",
-      body: JSON.stringify({
-        idToken: idToken,
-      }),
-    });
-    const data = await res.json();
-    setSecret(data.message);
-  };
+  useEffect(() => {
+    if (!idToken) return;
+    const fn = async () => {
+      const response = await fetch(`/api/fetch-database`, {
+        method: "POST",
+        body: JSON.stringify({
+          idToken: idToken,
+        }),
+      });
+      const quest = await response.json();
+      console.log(quest, "quest");
+      setQuest(quest.questList);
+    };
+    fn();
+  }, [idToken]);
 
   const mint = async (tokenId: string) => {
     const response = await fetch(`/api/generate-mint-signature`, {
@@ -62,7 +64,6 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     const signedPayload = await response.json();
     if (response.ok) {
       try {
-        console.log(6);
         console.log(contract, "contract");
         const nft = await contract?.erc1155.signature.mint(signedPayload);
       } catch (error: any) {
@@ -70,7 +71,6 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
       } finally {
       }
     } else {
-      console.log(3);
       toast({
         title: "An error occurred.",
         description: signedPayload.error,
@@ -84,29 +84,48 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     <div>
       {liff ? (
         <>
-          {isLoggedIn ? (
-            <Button onClick={() => logout()}>Logout</Button>
-          ) : address ? (
-            <Button onClick={() => login()}>Login</Button>
-          ) : (
-            <Button onClick={() => connect()}>Connect</Button>
-          )}
-          <Button onClick={setWallet}>Set Wallet</Button>
-          <Button onClick={() => mint("0")}>Mint</Button>
-
-          <pre>Connected Wallet: {address}</pre>
-          <pre>User: {JSON.stringify(user, undefined, 2) || "N/A"}</pre>
+          <Flex direction="column">
+            <Flex
+              mt="45px"
+              mb="20px"
+              justifyContent="space-between"
+              direction={{ base: "column", md: "row" }}
+              align={{ base: "start", md: "center" }}
+            >
+              <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700">
+                GOGAKU!!!
+              </Text>
+            </Flex>
+            <SimpleGrid columns={{ base: 1, md: 3 }} gap="20px">
+              <NFT
+                name="Quest 1"
+                author="By Esthera Jackson"
+                image={"/img/nfts/Nft1.png"}
+                score={quest?.[0]?.score || 0}
+                mint={() => mint("0")}
+                isMintable={quest?.[0].isCompleted}
+              />
+              <NFT
+                name="Quest 2"
+                author="By Nick Wilson"
+                image={"/img/nfts/Nft2.png"}
+                score={quest?.[1]?.score || 0}
+                mint={() => mint("1")}
+                isMintable={quest?.[1]?.isCompleted}
+              />
+              <NFT
+                name="Quest 3 "
+                author="By Will Smith"
+                image={"/img/nfts/Nft3.png"}
+                score={quest?.[2]?.score || 0}
+                mint={() => mint("2")}
+                isMintable={quest?.[2]?.isCompleted}
+              />
+            </SimpleGrid>
+          </Flex>
         </>
       ) : (
         <>...loading</>
-      )}
-      {liffError && (
-        <>
-          <p>LIFF init failed.</p>
-          <p>
-            <code>{liffError}</code>
-          </p>
-        </>
       )}
     </div>
   );
