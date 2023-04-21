@@ -20,7 +20,7 @@ export default async function handler(
 
   const data = new URLSearchParams();
   data.append("id_token", idToken);
-  data.append("client_id", "1660813476");
+  data.append("client_id", process.env.LINE_CLIENT_ID || "");
   const config = {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

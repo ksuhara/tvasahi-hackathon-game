@@ -8,7 +8,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { idToken } = JSON.parse(req.body);
+  const { idToken, voice, situation } = JSON.parse(req.body);
+  console.log(idToken, voice, situation);
   const { db } = initializeFirebaseServer();
   const data = new URLSearchParams();
   data.append("id_token", idToken);
@@ -24,14 +25,11 @@ export default async function handler(
     config
   );
   const userId = response.data.sub;
-  let questList = [];
-  for (let i = 0; i < 3; i++) {
-    const questRef = db.ref(`users/${userId}/quest/${i}`);
-    const questSnapshot = await questRef.once("value");
-    const quest = questSnapshot.val();
-    questList.push(quest);
-  }
-  console.log(questList, "questList");
 
-  res.status(200).json({ questList });
+  const userRef = db.ref(`users/${userId}/voice`);
+  await userRef.set(voice);
+  const situationRef = db.ref(`users/${userId}/situation`);
+  await situationRef.set(situation);
+
+  res.status(200).json("success");
 }
