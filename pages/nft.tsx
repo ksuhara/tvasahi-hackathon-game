@@ -31,15 +31,15 @@ const NFT: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     "0xdb6F6f88b32793349CA121421777a7615c4B8848"
   );
 
-  useEffect(() => {
-    if (!liff) return;
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-    const idToken = liff.getIDToken();
-    setIdToken(idToken!);
-  }, [liff]);
+  //   useEffect(() => {
+  //     if (!liff) return;
+  //     if (!liff.isLoggedIn()) {
+  //       liff.login();
+  //       return;
+  //     }
+  //     const idToken = liff.getIDToken();
+  //     setIdToken(idToken!);
+  //   }, [liff]);
 
   const connect = useMetamask();
 
@@ -110,6 +110,16 @@ const NFT: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                     </Card>
                   );
                 })}
+
+                <Card width="70%" mx="auto" rounded="md">
+                  <Image
+                    src={
+                      "https://gateway.ipfscdn.io/ipfs/QmXjC5jmFrisRVyaH3onG27RovZTJKqQeUVTmiiKaVdx3w"
+                    }
+                    alt={"nft.metadata.name"}
+                  ></Image>
+                  <Text>{"Doodle #2288"}</Text>
+                </Card>
                 <Button onClick={save} mx="auto" mt="8">
                   Set NFT
                 </Button>
