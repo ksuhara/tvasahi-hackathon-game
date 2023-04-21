@@ -1,6 +1,5 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import type { Liff } from "@line/liff";
-import { ScrollAlphaTestnet } from "@thirdweb-dev/chains";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
@@ -35,7 +34,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   pageProps.liffError = liffError;
   return (
     <ThirdwebProvider
-      activeChain={ScrollAlphaTestnet}
+      activeChain={"goerli"}
       authConfig={{
         domain: process.env.NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN || "",
         authUrl: "/api/auth",

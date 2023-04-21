@@ -72,14 +72,10 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
   useEffect(() => {
     if (!liff) return;
     if (!liff.isLoggedIn()) {
-      console.log(3);
       liff.login();
       return;
     }
-    console.log(4);
     const idToken = liff.getIDToken();
-    console.log(idToken, "idtoken");
-    console.log(5);
     setIdToken(idToken!);
   }, [liff]);
 
@@ -143,113 +139,127 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     <div>
       {liff ? (
         <>
-          <Flex direction="column">
-            <Flex
-              mt="45px"
-              mb="20px"
-              justifyContent="space-between"
-              direction={{ base: "column", md: "row" }}
-              align={{ base: "start", md: "center" }}
-            >
-              <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700">
-                GOGAKU!!!
-              </Text>
-              <Heading fontSize="2xl" ms="24px" mt="4">
-                Voice
-              </Heading>
+          <Flex
+            mt="45px"
+            mb="20px"
+            justifyContent="space-between"
+            direction={{ base: "column" }}
+            align={{ base: "start", md: "center" }}
+          >
+            <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700">
+              GOGAKU!!!
+            </Text>
+            <Heading fontSize="2xl" ms="24px" mt="4">
+              Voice
+            </Heading>
 
-              <Stack ms="24px" mt="12px" spacing="12" direction="row">
-                <Box
-                  onClick={() => handleAvatarClick("female")}
-                  _hover={{ cursor: "pointer", opacity: 0.7 }}
-                  textAlign="center"
+            <Stack ms="24px" mt="12px" spacing="12" direction="row">
+              <Box
+                onClick={() => handleAvatarClick("female")}
+                _hover={{ cursor: "pointer", opacity: 0.7 }}
+                textAlign="center"
+              >
+                <Avatar
+                  size="xl"
+                  name="female"
+                  src="img/avatars/avatar3.png"
+                  borderWidth={selectedAvatar === "female" ? "4px" : "1px"}
+                  borderColor={
+                    selectedAvatar === "female" ? "blue.300" : "gray.200"
+                  }
+                />
+                <Text
+                  fontWeight={selectedAvatar === "female" ? "bold" : "normal"}
                 >
-                  <Avatar
-                    size="xl"
-                    name="female"
-                    src="https://bit.ly/dan-abramov"
-                    borderWidth={selectedAvatar === "female" ? "4px" : "1px"}
-                    borderColor={
-                      selectedAvatar === "female" ? "blue.300" : "gray.200"
-                    }
-                  />
-                  <Text
-                    fontWeight={selectedAvatar === "female" ? "bold" : "normal"}
-                  >
-                    Female
-                  </Text>
-                </Box>
+                  Female
+                </Text>
+              </Box>
 
-                <Box
-                  onClick={() => handleAvatarClick("male")}
-                  _hover={{ cursor: "pointer", opacity: 0.7 }}
-                  textAlign="center"
+              <Box
+                onClick={() => handleAvatarClick("male")}
+                _hover={{ cursor: "pointer", opacity: 0.7 }}
+                textAlign="center"
+              >
+                <Avatar
+                  size="xl"
+                  name="male"
+                  src="img/avatars/avatar2.png"
+                  borderWidth={selectedAvatar === "male" ? "4px" : "1px"}
+                  borderColor={
+                    selectedAvatar === "male" ? "blue.300" : "gray.200"
+                  }
+                />
+                <Text
+                  fontWeight={selectedAvatar === "male" ? "bold" : "normal"}
                 >
-                  <Avatar
-                    size="xl"
-                    name="male"
-                    src="https://bit.ly/naruto-sage"
-                    borderWidth={selectedAvatar === "male" ? "4px" : "1px"}
-                    borderColor={
-                      selectedAvatar === "male" ? "blue.300" : "gray.200"
+                  male
+                </Text>
+              </Box>
+              <Box
+                onClick={() => handleAvatarClick("nft")}
+                _hover={{ cursor: "pointer", opacity: 0.7 }}
+                textAlign="center"
+              >
+                <Avatar
+                  size="xl"
+                  name="nft"
+                  src="img/nfts/Nft2.png"
+                  borderWidth={selectedAvatar === "nft" ? "4px" : "1px"}
+                  borderColor={
+                    selectedAvatar === "nft" ? "blue.300" : "gray.200"
+                  }
+                />
+                <Text fontWeight={selectedAvatar === "nft" ? "bold" : "normal"}>
+                  NFT
+                </Text>
+              </Box>
+            </Stack>
+            <Heading fontSize="2xl" ms="24px" mt="12">
+              Situation
+            </Heading>
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2} px="4" mt="4">
+              {situations?.map((item: any) => {
+                return (
+                  <Card
+                    key={item.id}
+                    p="4"
+                    onClick={() => {
+                      handleSituationClick(item.id);
+                    }}
+                    borderWidth={
+                      selectedSituationId === item.id ? "4px" : "1px"
                     }
-                  />
-                  <Text
-                    fontWeight={selectedAvatar === "male" ? "bold" : "normal"}
+                    borderColor={
+                      selectedSituationId === item.id ? "blue.300" : "gray.200"
+                    }
                   >
-                    male
-                  </Text>
-                </Box>
-              </Stack>
-              <Heading fontSize="2xl" ms="24px" mt="12">
-                Situation
-              </Heading>
-              <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2} px="4">
-                {situations?.map((item: any) => {
-                  return (
-                    <Card
-                      key={item.id}
-                      p="4"
-                      onClick={() => {
-                        handleSituationClick(item.id);
-                      }}
-                      borderWidth={
-                        selectedSituationId === item.id ? "4px" : "1px"
-                      }
-                      borderColor={
-                        selectedSituationId === item.id
-                          ? "blue.300"
-                          : "gray.200"
-                      }
+                    <Box
+                      _hover={{ cursor: "pointer", opacity: 0.7 }}
+                      textAlign="center"
                     >
-                      <Box
-                        _hover={{ cursor: "pointer", opacity: 0.7 }}
-                        textAlign="center"
-                      >
-                        <Image src={item.image} alt={item.situation} />
-                        <Text size="xs">{item.situation}</Text>
-                      </Box>
-                    </Card>
-                  );
-                })}
-                <Card borderWidth={"1px"} borderColor={"gray.200"}>
-                  <Flex
-                    alignItems="center"
-                    justifyContent="center"
-                    h="100%"
-                    w="100%"
-                  >
-                    <Stack>
-                      <AddIcon boxSize={12} color="gray.400" mx="auto" />
-                      <Text>Customize</Text>
-                    </Stack>
-                  </Flex>
-                </Card>
-              </SimpleGrid>
-              <Button onClick={save} width="sm" mx="auto" mt="4">
-                Save Setting
-              </Button>
-            </Flex>
+                      <Image src={item.image} alt={item.situation} />
+                      <Text size="xs">{item.situation}</Text>
+                    </Box>
+                  </Card>
+                );
+              })}
+              <Card borderWidth={"1px"} borderColor={"gray.200"}>
+                <Flex
+                  alignItems="center"
+                  justifyContent="center"
+                  h="100%"
+                  w="100%"
+                >
+                  <Stack>
+                    <AddIcon boxSize={12} color="gray.400" mx="auto" />
+                    <Text>Customize</Text>
+                  </Stack>
+                </Flex>
+              </Card>
+            </SimpleGrid>
+            <Button onClick={save} width="xs" mx="auto" mt="4">
+              Save Setting
+            </Button>
           </Flex>
         </>
       ) : (
