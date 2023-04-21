@@ -43,6 +43,12 @@ const NFT: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
 
   const connect = useMetamask();
 
+  const handleConnect = async () => {
+    if (!window.ethereum) {
+      window.open("dapp://tvasahi-hackathon-game.vercel.app/nft");
+    }
+    connect();
+  };
   useEffect(() => {
     const fn = async () => {
       if (!address) return;
@@ -88,27 +94,31 @@ const NFT: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
               Set NFT as your AI voice
             </Heading>
             {address ? (
-              <Text>{address}</Text>
+              <>
+                <Text size="xs">connected:{address}</Text>
+                {nfts.map((nft) => {
+                  return (
+                    <Card key={nft.tokenId} width="70%" mx="auto" rounded="md">
+                      <Image
+                        src={nft.metadata.image.replace(
+                          "ipfs://",
+                          "https://gateway.ipfscdn.io/ipfs/"
+                        )}
+                        alt={nft.metadata.name}
+                      ></Image>
+                      <Text>{nft.metadata.name}</Text>
+                    </Card>
+                  );
+                })}
+                <Button onClick={save} mx="auto" mt="8">
+                  Set NFT
+                </Button>
+              </>
             ) : (
-              <Button onClick={() => connect()}>Connect</Button>
+              <Button onClick={() => handleConnect()} mx="auto">
+                Connect Wallet
+              </Button>
             )}
-            {nfts.map((nft) => {
-              return (
-                <Card key={nft.tokenId} width="70%" mx="auto" rounded="md">
-                  <Image
-                    src={nft.metadata.image.replace(
-                      "ipfs://",
-                      "https://gateway.ipfscdn.io/ipfs/"
-                    )}
-                    alt={nft.metadata.name}
-                  ></Image>
-                  <Text>{nft.metadata.name}</Text>
-                </Card>
-              );
-            })}
-            <Button onClick={save} mx="auto" mt="8">
-              Set NFT
-            </Button>
           </Flex>
         </>
       ) : (
