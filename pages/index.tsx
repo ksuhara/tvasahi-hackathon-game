@@ -18,6 +18,7 @@ import {
 import type { Liff } from "@line/liff";
 import { useAddress, useContract } from "@thirdweb-dev/react";
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
@@ -28,6 +29,8 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
   const [idToken, setIdToken] = useState("");
   const toast = useToast();
   const textColor = useColorModeValue("secondaryGray.900", "white");
+
+  const router = useRouter();
 
   const [selectedAvatar, setSelectedAvatar] = useState("female");
   const [selectedSituationId, setSelectedSituationId] = useState(0);
@@ -78,34 +81,6 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
     const idToken = liff.getIDToken();
     setIdToken(idToken!);
   }, [liff]);
-
-  const mint = async (tokenId: string) => {
-    const response = await fetch(`/api/generate-mint-signature`, {
-      method: "POST",
-      body: JSON.stringify({
-        toAddress: address,
-        tokenId,
-        idToken: idToken,
-      }),
-    });
-    const signedPayload = await response.json();
-    if (response.ok) {
-      try {
-        console.log(contract, "contract");
-        const nft = await contract?.erc1155.signature.mint(signedPayload);
-      } catch (error: any) {
-        alert(error?.message);
-      } finally {
-      }
-    } else {
-      toast({
-        title: "An error occurred.",
-        description: signedPayload.error,
-        status: "error",
-        isClosable: true,
-      });
-    }
-  };
 
   const save = async () => {
     if (!idToken) return;
@@ -196,7 +171,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                 </Text>
               </Box>
               <Box
-                onClick={() => handleAvatarClick("nft")}
+                onClick={() => router.push("/nft")}
                 _hover={{ cursor: "pointer", opacity: 0.7 }}
                 textAlign="center"
               >
