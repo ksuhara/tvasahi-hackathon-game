@@ -1,5 +1,4 @@
 import { contractAddress } from "@/lib/constant";
-import { AddIcon } from "@chakra-ui/icons";
 import {
   Avatar,
   Box,
@@ -170,7 +169,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                   male
                 </Text>
               </Box>
-              <Box
+              {/* <Box
                 onClick={() => router.push("/nft")}
                 _hover={{ cursor: "pointer", opacity: 0.7 }}
                 textAlign="center"
@@ -187,7 +186,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                 <Text fontWeight={selectedAvatar === "nft" ? "bold" : "normal"}>
                   NFT
                 </Text>
-              </Box>
+              </Box> */}
             </Stack>
             <Heading fontSize="2xl" ms="24px" mt="12">
               Situation
@@ -218,7 +217,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                   </Card>
                 );
               })}
-              <Card borderWidth={"1px"} borderColor={"gray.200"}>
+              {/* <Card borderWidth={"1px"} borderColor={"gray.200"}>
                 <Flex
                   alignItems="center"
                   justifyContent="center"
@@ -230,7 +229,7 @@ const Home: NextPage<{ liff: Liff | null; liffError: string | null }> = ({
                     <Text>Customize</Text>
                   </Stack>
                 </Flex>
-              </Card>
+              </Card> */}
             </SimpleGrid>
             <Button onClick={save} width="xs" mx="auto" mt="4">
               Save Setting
