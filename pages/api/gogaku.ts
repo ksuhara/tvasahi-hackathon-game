@@ -208,6 +208,7 @@ async function handleAudio(
       `https://api-data.line.me/v2/bot/message/${audioId}/content/transcoding`,
       axiosConfig
     );
+    console.log(transcoding);
     const stream = await client.getMessageContent(audioId);
     const chunks = [];
 
