@@ -210,52 +210,53 @@ async function handleAudio(
       `https://api-data.line.me/v2/bot/message/${audioId}/content/transcoding`,
       axiosConfig
     );
-    console.log(transcoding);
-    const stream = await client.getMessageContent(audioId);
-    const chunks = [];
+    console.log(transcoding, "transcoding");
+    // const stream = await client.getMessageContent(audioId);
+    // const chunks = [];
 
-    for await (const chunk of stream) {
-      chunks.push(chunk);
-    }
+    // for await (const chunk of stream) {
+    //   chunks.push(chunk);
+    // }
 
-    const buffer = Buffer.concat(chunks);
+    // const buffer = Buffer.concat(chunks);
 
-    const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
+    // const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
 
-    const transcription = await openai.createTranscription(
-      mp3stream,
-      "whisper-1",
-      undefined,
-      "text"
-    );
+    // const transcription = await openai.createTranscription(
+    //   mp3stream,
+    //   "whisper-1",
+    //   undefined,
+    //   "text"
+    // );
 
-    const situ = await getSituation(userId);
+    // const situ = await getSituation(userId);
 
-    const system = {
-      role: "system",
-      content:
-        situ ||
-        `You are a friend of user. Be friendly as possible, and try to be as natural as possible. try to make your respond short, desireable 1-2 sentences. You can use the previous conversation to help you respond. you should not use the same respond twice. keep the conversation going for 3-5 minutes.`,
-    };
+    // const system = {
+    //   role: "system",
+    //   content:
+    //     situ ||
+    //     `You are a friend of user. Be friendly as possible, and try to be as natural as possible. try to make your respond short, desireable 1-2 sentences. You can use the previous conversation to help you respond. you should not use the same respond twice. keep the conversation going for 3-5 minutes.`,
+    // };
 
-    const messages = conversations.length
-      ? [
-          system,
-          ...conversations,
-          { role: "user", content: transcription.data },
-        ]
-      : [system, { role: "user", content: transcription.data }];
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: messages,
-    });
+    // const messages = conversations.length
+    //   ? [
+    //       system,
+    //       ...conversations,
+    //       { role: "user", content: transcription.data },
+    //     ]
+    //   : [system, { role: "user", content: transcription.data }];
+    // const completion = await openai.createChatCompletion({
+    //   model: "gpt-3.5-turbo",
+    //   messages: messages,
+    // });
 
-    const generatedText = completion.data.choices[0].message?.content.trim();
-    const conversationRef = db.ref(`conversations/gogaku/${userId}`);
+    // const generatedText = completion.data.choices[0].message?.content.trim();
+    // const conversationRef = db.ref(`conversations/gogaku/${userId}`);
 
-    await conversationRef.push({ role: "user", content: transcription.data });
-    await conversationRef.push({ role: "assistant", content: generatedText });
-    if (!generatedText) return;
+    // await conversationRef.push({ role: "user", content: transcription.data });
+    // await conversationRef.push({ role: "assistant", content: generatedText });
+    // if (!generatedText) return;
+    const generatedText = "Hello, how are you?";
     const url = await createAudioUrl(generatedText, userId);
 
     await client.replyMessage(replyToken, {
