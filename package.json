@@ -29,6 +29,7 @@
     "ethers": "5",
     "fetch-blob": "^3.2.0",
     "firebase-admin": "^11.5.0",
+    "fluent-ffmpeg": "^2.1.2",
     "framer-motion": "^10.10.0",
     "moralis": "^2.18.4",
     "next": "13.2.4",

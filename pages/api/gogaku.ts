@@ -220,7 +220,9 @@ async function handleAudio(
 
     const buffer = Buffer.concat(chunks);
 
-    const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
+    const mp3stream = bufferToReadableStream(buffer);
+
+    console.log(mp3stream, "mp3stream");
 
     const transcription = await openai.createTranscription(
       mp3stream,
@@ -343,13 +345,12 @@ async function getReviewOfConversation(userId: string) {
   return generatedText;
 }
 
-function bufferToReadableStream(buffer: Buffer, filename: string) {
+function bufferToReadableStream(buffer: Buffer) {
   const readable = new Readable({
     read() {
       this.push(buffer);
       this.push(null);
     },
   });
-  readable.path = filename;
   return readable;
 }
