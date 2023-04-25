@@ -204,13 +204,10 @@ async function handleAudio(
         Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN_GOGAKU}`,
       },
     };
-    console.log(audioId, "audioId");
-    console.log(axiosConfig, "axiosConfig");
     const transcoding = await axios.get(
       `https://api-data.line.me/v2/bot/message/${audioId}/content/transcoding`,
       axiosConfig
     );
-    console.log(transcoding, "transcoding");
     const stream = await client.getMessageContent(audioId);
     const chunks = [];
 
@@ -220,9 +217,7 @@ async function handleAudio(
 
     const buffer = Buffer.concat(chunks);
 
-    const mp3stream = bufferToReadableStream(buffer);
-
-    console.log(mp3stream, "mp3stream");
+    const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
 
     const transcription = await openai.createTranscription(
       mp3stream,
@@ -231,34 +226,33 @@ async function handleAudio(
       "text"
     );
 
-    // const situ = await getSituation(userId);
+    const situ = await getSituation(userId);
 
-    // const system = {
-    //   role: "system",
-    //   content:
-    //     situ ||
-    //     `You are a friend of user. Be friendly as possible, and try to be as natural as possible. try to make your respond short, desireable 1-2 sentences. You can use the previous conversation to help you respond. you should not use the same respond twice. keep the conversation going for 3-5 minutes.`,
-    // };
+    const system = {
+      role: "system",
+      content:
+        situ ||
+        `You are a friend of user. Be friendly as possible, and try to be as natural as possible. try to make your respond short, desireable 1-2 sentences. You can use the previous conversation to help you respond. you should not use the same respond twice. keep the conversation going for 3-5 minutes.`,
+    };
 
-    // const messages = conversations.length
-    //   ? [
-    //       system,
-    //       ...conversations,
-    //       { role: "user", content: transcription.data },
-    //     ]
-    //   : [system, { role: "user", content: transcription.data }];
-    // const completion = await openai.createChatCompletion({
-    //   model: "gpt-3.5-turbo",
-    //   messages: messages,
-    // });
+    const messages = conversations.length
+      ? [
+          system,
+          ...conversations,
+          { role: "user", content: transcription.data },
+        ]
+      : [system, { role: "user", content: transcription.data }];
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: messages,
+    });
 
-    // const generatedText = completion.data.choices[0].message?.content.trim();
-    // const conversationRef = db.ref(`conversations/gogaku/${userId}`);
+    const generatedText = completion.data.choices[0].message?.content.trim();
+    const conversationRef = db.ref(`conversations/gogaku/${userId}`);
 
-    // await conversationRef.push({ role: "user", content: transcription.data });
-    // await conversationRef.push({ role: "assistant", content: generatedText });
-    // if (!generatedText) return;
-    const generatedText = "Hello, how are you?";
+    await conversationRef.push({ role: "user", content: transcription.data });
+    await conversationRef.push({ role: "assistant", content: generatedText });
+    if (!generatedText) return;
     const url = await createAudioUrl(generatedText, userId);
 
     await client.replyMessage(replyToken, {
@@ -327,14 +321,16 @@ async function getReviewOfConversation(userId: string) {
 
   const system = {
     role: "system",
-    content: `You are an English tutor. You will be given a text of conversations from your student and an AI assistant.  When there are errors in the student's grammar or expression, or when there is a better way to respond, please correct it. If there is no misstake, praise your student. Make sure you only correct the answer from user, not an AI assistant. Respond in the following format:
+    content: `You are an English tutor. You will be given a text of conversations from your student and an AI assistant. Score students performance out of 100(be very severe at grading. do not hesitate to score under 50). When there are errors in the student's grammar or expression, or when there is a better way to respond, please correct it. Make sure you only correct the answer from user, not an AI assistant. Respond in the following format:
   
           Your response: ""
           
           Better response: ""
           
           Explanation: ""
-        `,
+          
+          Score: {score}/100
+          `,
   };
   const completion = await openai.createChatCompletion({
     model: "gpt-4",
@@ -345,12 +341,13 @@ async function getReviewOfConversation(userId: string) {
   return generatedText;
 }
 
-function bufferToReadableStream(buffer: Buffer) {
+function bufferToReadableStream(buffer: Buffer, filename: string) {
   const readable = new Readable({
     read() {
       this.push(buffer);
       this.push(null);
     },
   });
+  readable.path = filename;
   return readable;
 }
