@@ -204,6 +204,8 @@ async function handleAudio(
         Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN_GOGAKU}`,
       },
     };
+    console.log(audioId, "audioId");
+    console.log(axiosConfig, "axiosConfig");
     const transcoding = await axios.get(
       `https://api-data.line.me/v2/bot/message/${audioId}/content/transcoding`,
       axiosConfig
