@@ -211,23 +211,23 @@ async function handleAudio(
       axiosConfig
     );
     console.log(transcoding, "transcoding");
-    // const stream = await client.getMessageContent(audioId);
-    // const chunks = [];
+    const stream = await client.getMessageContent(audioId);
+    const chunks = [];
 
-    // for await (const chunk of stream) {
-    //   chunks.push(chunk);
-    // }
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
 
-    // const buffer = Buffer.concat(chunks);
+    const buffer = Buffer.concat(chunks);
 
-    // const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
+    const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
 
-    // const transcription = await openai.createTranscription(
-    //   mp3stream,
-    //   "whisper-1",
-    //   undefined,
-    //   "text"
-    // );
+    const transcription = await openai.createTranscription(
+      mp3stream,
+      "whisper-1",
+      undefined,
+      "text"
+    );
 
     // const situ = await getSituation(userId);
 
