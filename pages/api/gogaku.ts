@@ -217,7 +217,7 @@ async function handleAudio(
 
     const buffer = Buffer.concat(chunks);
 
-    const mp3stream = bufferToReadableStream(buffer, "audio.mp3");
+    const mp3stream = bufferToReadableStream(buffer, "audio.m4a");
 
     const transcription = await openai.createTranscription(
       mp3stream,
@@ -321,16 +321,14 @@ async function getReviewOfConversation(userId: string) {
 
   const system = {
     role: "system",
-    content: `You are an English tutor. You will be given a text of conversations from your student and an AI assistant. Score students performance out of 100(be very severe at grading. do not hesitate to score under 50). When there are errors in the student's grammar or expression, or when there is a better way to respond, please correct it. Make sure you only correct the answer from user, not an AI assistant. Respond in the following format:
+    content: `You are an English tutor. You will be given a text of conversations from your student and an AI assistant.  When there are errors in the student's grammar or expression, or when there is a better way to respond, please correct it. If there is no misstake, praise your student. Make sure you only correct the answer from user, not an AI assistant. Respond in the following format:
   
           Your response: ""
           
           Better response: ""
           
           Explanation: ""
-          
-          Score: {score}/100
-          `,
+        `,
   };
   const completion = await openai.createChatCompletion({
     model: "gpt-4",
