@@ -1,23 +1,21 @@
-import admin from "firebase-admin";
+import * as admin from "firebase-admin";
 import { cert, initializeApp } from "firebase-admin/app";
 import { Auth, getAuth } from "firebase-admin/auth";
 import { Database, getDatabase } from "firebase-admin/database";
-import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { getStorage, Storage } from "firebase-admin/storage";
+import * as functions from "firebase-functions";
 
 // Create Server-Side Instance of Firebase
 export default function initializeFirebaseServer(): {
   db: Database;
   auth: Auth;
   storage: Storage;
-  firestore: Firestore;
 } {
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY as string).replace(
-    /\\n/g,
-    "\n"
-  );
-  const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
+  const clientEmail = functions.config().myconfig.firebase_client_email;
+  const privateKey = functions
+    .config()
+    .myconfig.firebase_private_key.replace(/\\n/g, "\n");
+  const projectId = functions.config().myconfig.public_project_id;
 
   if (admin.apps.length === 0) {
     initializeApp({
@@ -26,19 +24,17 @@ export default function initializeFirebaseServer(): {
         privateKey,
         projectId,
       }),
-      databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
+      databaseURL: functions.config().myconfig.public_database_url,
     });
   }
 
   const db = getDatabase();
   const auth = getAuth();
   const storage = getStorage();
-  const firestore = getFirestore();
 
   return {
     db,
     auth,
     storage,
-    firestore,
   };
 }
